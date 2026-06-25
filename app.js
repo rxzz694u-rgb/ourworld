@@ -1346,6 +1346,7 @@
     }
 
     function pointerDown(e) {
+      if (e.touches) e.preventDefault();
       isDown = true;
       const p = getPos(e);
       scratchAt(p.x, p.y);
@@ -1363,9 +1364,9 @@
     scratchCanvas.onmousedown = pointerDown;
     scratchCanvas.onmousemove = pointerMove;
     scratchCanvas.onmouseup = pointerUp;
-    scratchCanvas.ontouchstart = pointerDown;
-    scratchCanvas.ontouchmove = pointerMove;
-    scratchCanvas.ontouchend = pointerUp;
+    scratchCanvas.addEventListener('touchstart', pointerDown, { passive: false });
+    scratchCanvas.addEventListener('touchmove', pointerMove, { passive: false });
+    scratchCanvas.addEventListener('touchend', pointerUp, { passive: false });
   }
 
   function revealScratchCard(key, content) {
@@ -1391,6 +1392,9 @@
     scratchCanvas.style.opacity = '1';
     scratchCanvas.onmousedown = scratchCanvas.onmousemove = scratchCanvas.onmouseup = null;
     scratchCanvas.ontouchstart = scratchCanvas.ontouchmove = scratchCanvas.ontouchend = null;
+    scratchCanvas.removeEventListener('touchstart', pointerDown);
+    scratchCanvas.removeEventListener('touchmove', pointerMove);
+    scratchCanvas.removeEventListener('touchend', pointerUp);
     renderScratch();
   }
 
