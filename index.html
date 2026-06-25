@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<meta name="theme-color" content="#1a1325">
+<meta name="description" content="Our World — a private space for two">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Our World">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Our World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   OUR WORLD — Design tokens
+   Palette: midnight plum bg, rose-gold + gold accents, cream text
+   Display face: Playfair Display (romantic serif, used with restraint)
+   Body/UI face: Plus Jakarta Sans
+   ============================================================ */
+:root{
+  --bg-0:#150f1d;
+  --bg-1:#1c1426;
+  --bg-2:#241b32;
+  --glass:rgba(255,255,255,0.06);
+  --glass-strong:rgba(255,255,255,0.10);
+  --glass-border:rgba(255,255,255,0.12);
+  --cream:#f6ecdf;
+  --cream-dim:rgba(246,236,223,0.62);
+  --cream-faint:rgba(246,236,223,0.38);
+  --rose:#e58a8a;
+  --rose-deep:#c8607a;
+  --gold:#d9b46a;
+  --gold-soft:#e6c98a;
+  --grad-primary:linear-gradient(135deg,#e8a8a0 0%, #c8607a 50%, #8e4a72 100%);
+  --grad-gold:linear-gradient(135deg,#e6c98a 0%, #d9b46a 100%);
+  --grad-bg:radial-gradient(120% 100% at 50% -10%, #2c1f3d 0%, #1c1426 45%, #120c19 100%);
+  --shadow-soft:0 8px 32px rgba(0,0,0,0.35);
+  --shadow-lift:0 16px 48px rgba(0,0,0,0.45);
+  --radius-lg:28px;
+  --radius-md:20px;
+  --radius-sm:14px;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --ease-soft:cubic-bezier(.4,0,.2,1);
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  background:var(--grad-bg);
+  color:var(--cream);
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  position:fixed;
+  inset:0;
+  width:100%;
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+}
+h1,h2,h3,.serif{font-family:'Playfair Display',serif;}
+button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer;}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
+  outline:2px solid var(--gold-soft); outline-offset:3px; border-radius:8px;
+}
+input,textarea{font-family:inherit;color:var(--cream);}
+::-webkit-scrollbar{display:none;}
+* {scrollbar-width:none;}
+
+/* App shell */
+#app{
+  position:relative;
+  height:100vh;
+  height:100dvh;
+  max-width:560px;
+  margin:0 auto;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+/* Glass panel base */
+.glass{
+  background:var(--glass);
+  backdrop-filter:blur(20px) saturate(140%);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius-md);
+}
+.glass-strong{
+  background:var(--glass-strong);
+  backdrop-filter:blur(24px) saturate(150%);
+  -webkit-backdrop-filter:blur(24px) saturate(150%);
+  border:1px solid var(--glass-border);
+}
+
+/* Screens */
+.screen{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translateY(8px);
+  transition:opacity .42s var(--ease), transform .42s var(--ease);
+  padding-top:var(--safe-top);
+  padding-bottom:var(--safe-bottom);
+}
+.screen.active{
+  opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0);
+}
+.screen-scroll{
+  flex:1;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:24px 20px calc(110px + var(--safe-bottom));
+}
+
+/* Top bar */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:calc(16px + var(--safe-top)) 20px 14px;
+  position:sticky; top:0; z-index:5;
+}
+.topbar h1{font-size:22px; margin:0; font-weight:600; letter-spacing:.2px;}
+.icon-btn{
+  width:40px; height:40px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--glass); border:1px solid var(--glass-border);
+  transition:transform .2s var(--ease-soft), background .2s;
+}
+.icon-btn:active{transform:scale(.92); background:var(--glass-strong);}
+.icon-btn svg{width:19px;height:19px;}
+
+/* Bottom tab bar */
+.tabbar{
+  position:absolute; left:0; right:0; bottom:0; z-index:20;
+  display:flex; justify-content:space-between;
+  padding:10px 10px calc(10px + var(--safe-bottom));
+  background:rgba(21,15,29,0.72);
+  backdrop-filter:blur(22px) saturate(150%);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);
+  border-top:1px solid var(--glass-border);
+}
+.tab{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding:6px 2px; border-radius:14px; color:var(--cream-faint);
+  transition:color .25s, transform .2s var(--ease-soft);
+}
+.tab svg{width:21px;height:21px; transition:transform .25s var(--ease-soft);}
+.tab span{font-size:10.5px; font-weight:600; letter-spacing:.2px;}
+.tab.active{color:var(--gold-soft);}
+.tab.active svg{transform:translateY(-2px) scale(1.06);}
+.tab:active{transform:scale(.93);}
+
+/* Buttons */
+.btn-primary{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:15px 28px; border-radius:50px;
+  background:var(--grad-primary); color:#2a1018;
+  font-weight:700; font-size:15px; letter-spacing:.2px;
+  box-shadow:0 10px 30px rgba(200,96,122,0.35);
+  transition:transform .2s var(--ease-soft), box-shadow .2s;
+}
+.btn-primary:active{transform:scale(.96); box-shadow:0 6px 16px rgba(200,96,122,0.3);}
+.btn-ghost{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:13px 24px; border-radius:50px;
+  background:var(--glass); border:1px solid var(--glass-border);
+  color:var(--cream); font-weight:600; font-size:14px;
+  transition:transform .2s var(--ease-soft), background .2s;
+}
+.btn-ghost:active{transform:scale(.96); background:var(--glass-strong);}
+.btn-gold{
+  background:var(--grad-gold); color:#3a2a10;
+  box-shadow:0 10px 30px rgba(217,180,106,0.3);
+}
+
+/* ===================== WELCOME ===================== */
+#screen-welcome{z-index:100; background:var(--grad-bg);}
+.welcome-wrap{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:0 32px; position:relative;
+}
+#heart-canvas{position:absolute; inset:0; width:100%; height:100%;}
+.welcome-mark{
+  width:84px; height:84px; border-radius:50%;
+  background:var(--grad-primary);
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:28px; position:relative; z-index:2;
+  box-shadow:0 14px 40px rgba(200,96,122,0.4);
+  animation:welcomePulse 2.8s ease-in-out infinite;
+}
+@keyframes welcomePulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
+.welcome-mark svg{width:38px;height:38px;fill:#2a1018;}
+.welcome-title{
+  font-size:34px; font-weight:600; line-height:1.25; margin:0 0 12px; position:relative; z-index:2;
+  opacity:0; animation:riseIn .8s var(--ease) .15s forwards;
+}
+.welcome-sub{
+  font-size:15px; color:var(--cream-dim); margin:0 0 40px; max-width:280px; line-height:1.6;
+  position:relative; z-index:2; opacity:0; animation:riseIn .8s var(--ease) .35s forwards;
+}
+@keyframes riseIn{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+.welcome-enter{position:relative; z-index:2; opacity:0; animation:riseIn .8s var(--ease) .55s forwards;}
+
+/* ===================== HOME ===================== */
+.home-hero{
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  padding:8px 24px 28px;
+}
+.avatar-ring{
+  width:120px; height:120px; border-radius:50%; padding:4px;
+  background:var(--grad-primary);
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:18px; box-shadow:var(--shadow-soft);
+  position:relative;
+}
+.avatar-ring img, .avatar-ring .avatar-fallback{
+  width:100%; height:100%; border-radius:50%; object-fit:cover;
+  background:var(--bg-2); display:flex; align-items:center; justify-content:center;
+  font-family:'Playfair Display',serif; font-size:40px; color:var(--gold-soft);
+  border:3px solid var(--bg-1);
+}
+.home-date{font-size:13px; color:var(--cream-faint); letter-spacing:.4px; margin-bottom:6px;}
+.home-greeting{font-size:24px; font-weight:600; margin:0 0 4px;}
+.home-sub{font-size:14px; color:var(--cream-dim); margin:0;}
+
+.stat-row{display:flex; gap:10px; margin-bottom:18px;}
+.stat-card{
+  flex:1; padding:16px 12px; text-align:center; border-radius:var(--radius-sm);
+}
+.stat-num{font-family:'Playfair Display',serif; font-size:26px; font-weight:700; color:var(--gold-soft); line-height:1;}
+.stat-label{font-size:11px; color:var(--cream-faint); margin-top:4px; letter-spacing:.3px;}
+
+.quick-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;}
+.quick-card{
+  padding:18px 16px; border-radius:var(--radius-sm); text-align:left;
+  transition:transform .2s var(--ease-soft);
+  display:flex; flex-direction:column; gap:10px;
+}
+.quick-card:active{transform:scale(.96);}
+.quick-card svg{width:22px; height:22px; color:var(--gold-soft);}
+.quick-card .qc-title{font-size:14px; font-weight:700;}
+.quick-card .qc-sub{font-size:11.5px; color:var(--cream-faint);}
+
+.note-card{
+  padding:20px; border-radius:var(--radius-md); margin-bottom:18px;
+  background:linear-gradient(135deg, rgba(217,180,106,0.14), rgba(232,138,138,0.10));
+  border:1px solid rgba(217,180,106,0.22);
+}
+.note-card .nc-label{font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--gold-soft); font-weight:700; margin-bottom:8px; display:block;}
+.note-card p{font-family:'Playfair Display',serif; font-style:italic; font-size:16px; line-height:1.55; margin:0;}
+
+/* floating hearts ambient */
+.float-hearts{position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0;}
+.float-heart{
+  position:absolute; bottom:-30px; opacity:0; font-size:18px;
+  animation:floatUp linear forwards;
+  color:var(--rose);
+}
+@keyframes floatUp{
+  0%{opacity:0; transform:translateY(0) translateX(0) scale(.6) rotate(0deg);}
+  10%{opacity:.55;}
+  85%{opacity:.35;}
+  100%{opacity:0; transform:translateY(-115vh) translateX(var(--drift,20px)) scale(1.1) rotate(20deg);}
+}
+
+/* ===================== SECTION HEADERS ===================== */
+.section-head{margin-bottom:18px;}
+.section-head h2{font-size:24px; margin:0 0 4px; font-weight:600;}
+.section-head p{font-size:13.5px; color:var(--cream-dim); margin:0;}
+
+/* generic card list */
+.card{padding:18px; border-radius:var(--radius-md); margin-bottom:14px;}
+.empty-state{
+  text-align:center; padding:50px 20px; color:var(--cream-faint);
+}
+.empty-state svg{width:48px; height:48px; margin-bottom:14px; opacity:.5;}
+.empty-state p{font-size:14px; margin:0 0 18px; line-height:1.6;}
+
+/* FAB */
+.fab{
+  position:absolute; right:20px; bottom:calc(96px + var(--safe-bottom));
+  width:56px; height:56px; border-radius:50%;
+  background:var(--grad-primary); display:flex; align-items:center; justify-content:center;
+  box-shadow:0 12px 28px rgba(200,96,122,0.45); z-index:15;
+  transition:transform .2s var(--ease-soft);
+}
+.fab:active{transform:scale(.9) rotate(90deg);}
+.fab svg{width:24px; height:24px; fill:#2a1018;}
+
+/* ===================== LOVE COUNTER ===================== */
+.counter-hero{
+  text-align:center; padding:10px 10px 28px;
+}
+.counter-hero .ch-label{font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold-soft); font-weight:700; margin-bottom:10px; display:block;}
+.counter-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:8px;}
+.counter-unit{
+  padding:18px 8px; border-radius:var(--radius-sm); text-align:center;
+}
+.counter-unit .cu-num{font-family:'Playfair Display',serif; font-size:30px; font-weight:700; line-height:1; background:var(--grad-gold); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+.counter-unit .cu-label{font-size:10.5px; color:var(--cream-faint); margin-top:6px; letter-spacing:.4px; text-transform:uppercase;}
+.counter-sub-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:10px;}
+
+.date-edit-row{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 18px; border-radius:var(--radius-sm); margin-top:18px;
+}
+.date-edit-row .label{font-size:13.5px; color:var(--cream-dim);}
+.date-edit-row .value{font-weight:700; font-size:14px;}
+
+/* ===================== GALLERY ===================== */
+.gallery-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.gallery-item{
+  position:relative; aspect-ratio:1; border-radius:16px; overflow:hidden;
+  background:var(--glass);
+}
+.gallery-item img{width:100%; height:100%; object-fit:cover; display:block;}
+.gallery-item .gi-del{
+  position:absolute; top:6px; right:6px; width:26px; height:26px; border-radius:50%;
+  background:rgba(20,12,18,0.6); backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center;
+}
+.gallery-item .gi-del svg{width:13px; height:13px;}
+.upload-tile{
+  aspect-ratio:1; border-radius:16px; border:1.5px dashed var(--glass-border);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  color:var(--cream-faint); font-size:12px; font-weight:600;
+}
+.upload-tile svg{width:24px;height:24px;}
+
+/* Lightbox */
+.lightbox{
+  position:fixed; inset:0; z-index:300; background:rgba(8,5,11,0.94);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; visibility:hidden; transition:opacity .3s var(--ease);
+}
+.lightbox.active{opacity:1; visibility:visible;}
+.lightbox img{max-width:92%; max-height:78vh; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  opacity:0; transform:scale(.92); transition:opacity .35s var(--ease), transform .35s var(--ease);}
+.lightbox.active img{opacity:1; transform:scale(1);}
+.lightbox-close{
+  position:absolute; top:calc(20px + var(--safe-top)); right:20px; width:40px; height:40px;
+  border-radius:50%; background:var(--glass-strong); display:flex; align-items:center; justify-content:center;
+}
+.lightbox-nav{
+  position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:50%;
+  background:var(--glass-strong); display:flex; align-items:center; justify-content:center;
+}
+.lightbox-prev{left:14px;} .lightbox-next{right:14px;}
+
+/* ===================== LOVE LETTERS ===================== */
+.letter-card{
+  border-radius:var(--radius-md); margin-bottom:14px; overflow:hidden;
+  cursor:pointer;
+}
+.letter-head{display:flex; align-items:center; justify-content:space-between; padding:18px;}
+.letter-head .lh-title{font-family:'Playfair Display',serif; font-size:17px; font-weight:600; font-style:italic;}
+.letter-head .lh-date{font-size:11px; color:var(--cream-faint); margin-top:3px;}
+.letter-chevron{transition:transform .3s var(--ease);}
+.letter-card.open .letter-chevron{transform:rotate(180deg);}
+.letter-body{
+  max-height:0; overflow:hidden; transition:max-height .4s var(--ease);
+  padding:0 18px;
+}
+.letter-card.open .letter-body{padding-bottom:18px;}
+.letter-body p{font-size:14.5px; line-height:1.75; color:var(--cream-dim); margin:0; white-space:pre-wrap;}
+.letter-del{
+  display:flex; align-items:center; gap:6px; font-size:12px; color:var(--rose);
+  margin-top:14px; font-weight:600;
+}
+
+/* ===================== OPEN WHEN ===================== */
+.ow-grid{display:flex; flex-direction:column; gap:12px;}
+.ow-card{
+  padding:20px; border-radius:var(--radius-md); display:flex; align-items:center; gap:14px;
+  transition:transform .2s var(--ease-soft);
+}
+.ow-card:active{transform:scale(.97);}
+.ow-icon{
+  width:48px; height:48px; border-radius:50%; flex-shrink:0;
+  background:var(--grad-primary); display:flex; align-items:center; justify-content:center;
+}
+.ow-icon svg{width:22px; height:22px; fill:#2a1018;}
+.ow-text .ow-title{font-weight:700; font-size:15px; margin-bottom:2px;}
+.ow-text .ow-sub{font-size:12px; color:var(--cream-faint);}
+
+.ow-modal{
+  position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-content:center;
+  padding:24px; background:rgba(8,5,11,0.78); backdrop-filter:blur(4px);
+  opacity:0; visibility:hidden; transition:opacity .3s var(--ease);
+}
+.ow-modal.active{opacity:1; visibility:visible;}
+.ow-modal-card{
+  width:100%; max-width:380px; border-radius:24px; padding:32px 26px; text-align:center;
+  background:linear-gradient(160deg, #2a2038, #1c1426); border:1px solid var(--glass-border);
+  transform:scale(.88) translateY(10px); transition:transform .35s var(--ease);
+  box-shadow:var(--shadow-lift);
+}
+.ow-modal.active .ow-modal-card{transform:scale(1) translateY(0);}
+.ow-modal-card .om-icon{
+  width:60px; height:60px; border-radius:50%; margin:0 auto 18px;
+  background:var(--grad-gold); display:flex; align-items:center; justify-content:center;
+}
+.ow-modal-card .om-icon svg{width:26px; height:26px; fill:#3a2a10;}
+.ow-modal-card h3{font-size:19px; margin:0 0 14px;}
+.ow-modal-card p{font-size:15px; line-height:1.7; color:var(--cream-dim); margin:0 0 22px; font-family:'Playfair Display',serif; font-style:italic;}
+
+/* ===================== BUCKET LIST ===================== */
+.progress-wrap{margin-bottom:20px;}
+.progress-bar-track{
+  height:10px; border-radius:6px; background:rgba(255,255,255,0.08); overflow:hidden; margin-top:10px;
+}
+.progress-bar-fill{
+  height:100%; border-radius:6px; background:var(--grad-gold); width:0%;
+  transition:width .5s var(--ease);
+}
+.progress-pct{font-family:'Playfair Display',serif; font-size:15px; font-weight:700; color:var(--gold-soft);}
+.bucket-item{
+  display:flex; align-items:center; gap:12px; padding:16px; border-radius:var(--radius-sm); margin-bottom:10px;
+}
+.bucket-check{
+  width:26px; height:26px; border-radius:50%; border:2px solid var(--glass-border); flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; transition:all .25s var(--ease-soft);
+}
+.bucket-check svg{width:13px; height:13px; opacity:0; transition:opacity .2s;}
+.bucket-item.done .bucket-check{background:var(--grad-gold); border-color:transparent;}
+.bucket-item.done .bucket-check svg{opacity:1;}
+.bucket-item.done .bucket-text{text-decoration:line-through; color:var(--cream-faint);}
+.bucket-text{flex:1; font-size:14.5px;}
+.bucket-del{flex-shrink:0; opacity:.5;}
+.bucket-del svg{width:16px;height:16px;}
+
+/* ===================== COUNTDOWN ===================== */
+.countdown-wrap{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:20px 24px; text-align:center;
+}
+.countdown-wrap .cw-label{font-size:13px; color:var(--cream-dim); margin-bottom:6px;}
+.countdown-wrap .cw-title{font-size:22px; font-weight:600; margin:0 0 30px;}
+.cd-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; width:100%; max-width:380px;}
+.cd-unit{padding:16px 4px; border-radius:18px; text-align:center;}
+.cd-num{font-family:'Playfair Display',serif; font-size:28px; font-weight:700;}
+.cd-lbl{font-size:9.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--cream-faint); margin-top:4px;}
+.cd-edit{margin-top:28px;}
+
+/* ===================== MUSIC ===================== */
+.music-card{
+  border-radius:28px; padding:28px 24px; text-align:center; margin-top:10px;
+  background:linear-gradient(160deg, rgba(232,138,138,0.14), rgba(140,80,120,0.10));
+}
+.album-art{
+  width:180px; height:180px; border-radius:20px; margin:0 auto 22px;
+  background:var(--grad-primary); display:flex; align-items:center; justify-content:center;
+  box-shadow:0 16px 40px rgba(200,96,122,0.35);
+  transition:transform 4s linear;
+}
+.album-art.spinning{animation:spin 6s linear infinite;}
+@keyframes spin{from{transform:rotate(0deg);} to{transform:rotate(360deg);}}
+.album-art svg{width:64px; height:64px; fill:rgba(42,16,24,0.55);}
+.music-title{font-size:17px; font-weight:700; margin-bottom:4px;}
+.music-artist{font-size:13px; color:var(--cream-faint); margin-bottom:20px;}
+.music-progress{height:4px; background:rgba(255,255,255,0.1); border-radius:4px; margin-bottom:24px; overflow:hidden;}
+.music-progress-fill{height:100%; width:0%; background:var(--grad-gold); border-radius:4px;}
+.music-controls{display:flex; align-items:center; justify-content:center; gap:22px;}
+.music-btn{
+  width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:var(--glass); transition:transform .2s var(--ease-soft);
+}
+.music-btn.play{width:62px; height:62px; background:var(--grad-gold);}
+.music-btn.play svg{fill:#3a2a10;}
+.music-btn:active{transform:scale(.9);}
+.music-btn svg{width:18px; height:18px; fill:var(--cream);}
+.music-btn.play svg{width:22px; height:22px;}
+.music-upload-hint{font-size:11.5px; color:var(--cream-faint); margin-top:18px; line-height:1.6;}
+
+/* ===================== SECRET / PIN ===================== */
+.pin-wrap{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:24px;
+}
+.pin-lock{
+  width:72px; height:72px; border-radius:50%; margin-bottom:24px;
+  background:var(--glass-strong); display:flex; align-items:center; justify-content:center;
+}
+.pin-lock svg{width:30px; height:30px; color:var(--gold-soft);}
+.pin-title{font-size:18px; font-weight:600; margin-bottom:8px;}
+.pin-sub{font-size:13px; color:var(--cream-faint); margin-bottom:30px;}
+.pin-dots{display:flex; gap:16px; margin-bottom:34px;}
+.pin-dot{width:16px; height:16px; border-radius:50%; border:2px solid var(--glass-border); transition:all .2s;}
+.pin-dot.filled{background:var(--gold-soft); border-color:var(--gold-soft);}
+.pin-pad{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; max-width:280px;}
+.pin-key{
+  width:72px; height:72px; border-radius:50%; font-size:24px; font-weight:600;
+  background:var(--glass); display:flex; align-items:center; justify-content:center;
+  transition:transform .15s var(--ease-soft), background .15s;
+}
+.pin-key:active{transform:scale(.92); background:var(--glass-strong);}
+.pin-key.fn svg{width:20px;height:20px;}
+.shake{animation:shakeAnim .45s;}
+@keyframes shakeAnim{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-10px);}
+  40%{transform:translateX(8px);}
+  60%{transform:translateX(-6px);}
+  80%{transform:translateX(4px);}
+}
+
+/* ===================== GIFTS ===================== */
+.gift-tabs{display:flex; gap:8px; margin-bottom:18px;}
+.gift-tab{
+  flex:1; padding:11px; text-align:center; border-radius:50px; font-size:13px; font-weight:700;
+  background:var(--glass); color:var(--cream-faint); transition:all .25s;
+}
+.gift-tab.active{background:var(--grad-primary); color:#2a1018;}
+.gift-stage{
+  min-height:280px; border-radius:var(--radius-md); display:flex; flex-direction:column;
+  align-items:center; justify-content:center; padding:30px; text-align:center; position:relative; overflow:hidden;
+}
+.gift-emoji-display{font-size:90px; margin-bottom:18px; transition:transform .4s var(--ease-soft);}
+.gift-emoji-display.pop{animation:giftPop .5s var(--ease-soft);}
+@keyframes giftPop{0%{transform:scale(.3) rotate(-15deg);} 60%{transform:scale(1.15) rotate(6deg);} 100%{transform:scale(1) rotate(0deg);}}
+.gift-msg{font-size:15px; color:var(--cream-dim); margin-bottom:18px; min-height:22px;}
+.gift-row{display:flex; gap:14px; flex-wrap:wrap; justify-content:center;}
+.gift-pick{
+  width:52px; height:52px; border-radius:16px; font-size:24px;
+  background:var(--glass); display:flex; align-items:center; justify-content:center;
+  transition:transform .2s var(--ease-soft);
+}
+.gift-pick:active{transform:scale(.88);}
+
+/* ===================== SCRATCH CARDS ===================== */
+.daily-special{
+  border-radius:24px; padding:4px; margin-bottom:22px;
+  background:var(--grad-gold);
+}
+.daily-special-inner{
+  border-radius:21px; padding:18px; background:var(--bg-1);
+  display:flex; align-items:center; gap:14px;
+}
+.ds-icon{font-size:30px;}
+.ds-text .ds-label{font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--gold-soft); font-weight:700;}
+.ds-text .ds-title{font-size:14.5px; font-weight:700; margin-top:2px;}
+
+.scratch-cat-grid{display:flex; flex-direction:column; gap:12px;}
+.scratch-cat{
+  padding:18px; border-radius:var(--radius-md); display:flex; align-items:center; gap:14px;
+  transition:transform .2s var(--ease-soft);
+}
+.scratch-cat:active{transform:scale(.97);}
+.sc-emoji{font-size:28px; width:44px; text-align:center;}
+.sc-title{font-weight:700; font-size:14.5px;}
+.sc-sub{font-size:11.5px; color:var(--cream-faint); margin-top:2px;}
+.sc-badge{
+  margin-left:auto; font-size:10px; font-weight:700; padding:4px 9px; border-radius:50px;
+  background:rgba(217,180,106,0.18); color:var(--gold-soft);
+}
+
+.scratch-modal{
+  position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-content:center;
+  padding:24px; background:rgba(8,5,11,0.85);
+  opacity:0; visibility:hidden; transition:opacity .3s var(--ease);
+}
+.scratch-modal.active{opacity:1; visibility:visible;}
+.scratch-card-3d{
+  width:100%; max-width:320px; aspect-ratio:0.72; position:relative;
+  perspective:1200px;
+}
+.scratch-card-flip{
+  position:relative; width:100%; height:100%; transition:transform .7s var(--ease);
+  transform-style:preserve-3d;
+}
+.scratch-card-3d.flipped .scratch-card-flip{transform:rotateY(180deg);}
+.sc-face{
+  position:absolute; inset:0; border-radius:22px; backface-visibility:hidden;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  box-shadow:var(--shadow-lift);
+}
+.sc-face-front{
+  background:linear-gradient(160deg,#2a2038,#1c1426); border:1px solid var(--glass-border);
+}
+.sc-face-front .scf-emoji{font-size:54px; margin-bottom:14px;}
+.sc-face-front h3{font-size:18px; margin:0 0 8px;}
+.sc-face-front p{font-size:12.5px; color:var(--cream-faint); margin:0; padding:0 30px;}
+.sc-face-back{
+  background:#cbb47a; transform:rotateY(180deg); overflow:hidden;
+}
+.scratch-canvas-wrap{position:absolute; inset:0; border-radius:22px; overflow:hidden;}
+.scratch-reveal{
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:30px; text-align:center; background:linear-gradient(160deg,#2a2038,#1c1426);
+}
+.scratch-reveal .sr-emoji{font-size:40px; margin-bottom:14px;}
+.scratch-reveal p{font-size:16px; line-height:1.6; font-family:'Playfair Display',serif; font-style:italic; margin:0;}
+.scratch-canvas{position:absolute; inset:0; width:100%; height:100%; touch-action:none; border-radius:22px;}
+.scratch-hint{
+  position:absolute; bottom:14px; left:0; right:0; text-align:center; font-size:11px;
+  color:rgba(0,0,0,0.45); font-weight:700; pointer-events:none;
+}
+.scratch-modal-close{
+  position:absolute; top:calc(20px + var(--safe-top)); right:20px; width:38px; height:38px; border-radius:50%;
+  background:var(--glass-strong); display:flex; align-items:center; justify-content:center; z-index:5;
+}
+.scratch-modal-actions{margin-top:24px; display:flex; gap:10px;}
+
+/* ===================== SETTINGS ===================== */
+.settings-section{margin-bottom:24px;}
+.settings-section h3{font-size:13px; text-transform:uppercase; letter-spacing:.6px; color:var(--cream-faint); margin:0 0 12px; font-weight:700;}
+.settings-row{
+  display:flex; align-items:center; justify-content:space-between; padding:16px 18px;
+  border-radius:var(--radius-sm); margin-bottom:8px;
+}
+.settings-row .sr-label{font-size:14.5px; font-weight:600;}
+.settings-row .sr-sub{font-size:11.5px; color:var(--cream-faint); margin-top:2px;}
+.settings-avatar-edit{display:flex; align-items:center; gap:14px; margin-bottom:18px;}
+.theme-swatches{display:flex; gap:12px; flex-wrap:wrap; padding:6px 0;}
+.theme-swatch{
+  width:42px; height:42px; border-radius:50%; border:2px solid transparent; position:relative;
+}
+.theme-swatch.active::after{
+  content:''; position:absolute; inset:-5px; border-radius:50%; border:2px solid var(--gold-soft);
+}
+input[type="text"], input[type="date"], textarea, input[type="password"]{
+  width:100%; padding:14px 16px; border-radius:14px; background:rgba(255,255,255,0.06);
+  border:1px solid var(--glass-border); font-size:14.5px;
+}
+textarea{resize:vertical; min-height:90px; font-family:inherit; line-height:1.6;}
+.form-label{font-size:12.5px; color:var(--cream-dim); margin-bottom:8px; display:block; font-weight:600;}
+.form-group{margin-bottom:16px;}
+
+/* ===================== MODAL / SHEET ===================== */
+.sheet-overlay{
+  position:fixed; inset:0; z-index:250; background:rgba(8,5,11,0.7);
+  opacity:0; visibility:hidden; transition:opacity .3s var(--ease);
+}
+.sheet-overlay.active{opacity:1; visibility:visible;}
+.sheet{
+  position:absolute; left:0; right:0; bottom:0; max-width:560px; margin:0 auto;
+  background:linear-gradient(160deg,#241b32,#1a1325);
+  border-radius:28px 28px 0 0; border:1px solid var(--glass-border); border-bottom:none;
+  padding:14px 22px calc(28px + var(--safe-bottom));
+  transform:translateY(100%); transition:transform .38s var(--ease);
+  max-height:85vh; overflow-y:auto;
+}
+.sheet-overlay.active .sheet{transform:translateY(0);}
+.sheet-handle{width:36px; height:4px; border-radius:4px; background:var(--glass-border); margin:0 auto 18px;}
+.sheet h3{font-size:19px; margin:0 0 18px;}
+.sheet-actions{display:flex; gap:10px; margin-top:18px;}
+.sheet-actions .btn-primary, .sheet-actions .btn-ghost{flex:1;}
+
+/* Toast */
+.toast{
+  position:absolute; top:calc(16px + var(--safe-top)); left:50%; transform:translateX(-50%) translateY(-20px);
+  background:rgba(30,22,40,0.95); backdrop-filter:blur(10px); border:1px solid var(--glass-border);
+  padding:12px 20px; border-radius:50px; font-size:13.5px; font-weight:600; z-index:400;
+  opacity:0; transition:opacity .3s, transform .3s; pointer-events:none; white-space:nowrap;
+  box-shadow:var(--shadow-soft); display:flex; align-items:center; gap:8px;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* Confetti / fireworks canvas */
+#fx-canvas{position:fixed; inset:0; z-index:500; pointer-events:none;}
+
+/* Heart tap burst */
+.tap-heart{
+  position:absolute; pointer-events:none; font-size:22px; z-index:200;
+  animation:tapHeartAnim .9s ease-out forwards;
+}
+@keyframes tapHeartAnim{
+  0%{opacity:1; transform:translateY(0) scale(.6);}
+  100%{opacity:0; transform:translateY(-90px) scale(1.3);}
+}
+
+/* Utility */
+.row-between{display:flex; align-items:center; justify-content:space-between;}
+.mt-0{margin-top:0;}
+.hidden{display:none !important;}
+.swipe-row{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin:0 -20px; padding-left:20px; padding-right:20px;}
+.swipe-row::-webkit-scrollbar{display:none;}
+</style>
+</head>
+<body>
+
+<canvas id="fx-canvas"></canvas>
+
+<div id="app">
+
+  <!-- ============ WELCOME SCREEN ============ -->
+  <div class="screen active" id="screen-welcome">
+    <canvas id="heart-canvas"></canvas>
+    <div class="welcome-wrap">
+      <div class="welcome-mark">
+        <svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10.1-9.1C.4 9.2 1.6 5.6 4.9 4.6c2-.6 4 .2 5.1 1.9.5.8.9 1.5 2 1.5s1.5-.7 2-1.5c1.1-1.7 3.1-2.5 5.1-1.9 3.3 1 4.5 4.6 3 7.3C19.4 16.4 12 21 12 21z"/></svg>
+      </div>
+      <h1 class="welcome-title">Welcome to<br>Our World ❤️</h1>
+      <p class="welcome-sub" id="welcome-names">A little universe, made of just the two of us.</p>
+      <button class="btn-primary welcome-enter" id="btn-enter" style="padding:16px 44px; font-size:16px;">Enter</button>
+    </div>
+  </div>
+
+  <!-- ============ HOME ============ -->
+  <div class="screen" id="screen-home">
+    <div class="float-hearts" id="home-float-hearts"></div>
+    <div class="topbar">
+      <h1>Our World</h1>
+      <button class="icon-btn" data-nav="settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.04.52.12.76.24"/></svg>
+      </button>
+    </div>
+    <div class="screen-scroll" id="home-scroll">
+      <div class="home-hero">
+        <div class="avatar-ring" id="tap-heart-zone">
+          <div class="avatar-fallback" id="avatar-display">💛</div>
+        </div>
+        <div class="home-date" id="home-date">—</div>
+        <h2 class="home-greeting" id="home-greeting">Hi, love</h2>
+        <p class="home-sub" id="home-sub">Tap our photo for a little surprise ✨</p>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card glass">
+          <div class="stat-num" id="home-days-num">0</div>
+          <div class="stat-label">Days together</div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-num" id="home-letters-num">0</div>
+          <div class="stat-label">Love letters</div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-num" id="home-photos-num">0</div>
+          <div class="stat-label">Memories</div>
+        </div>
+      </div>
+
+      <div class="note-card">
+        <span class="nc-label">Today's love note</span>
+        <p id="home-daily-note">Loading something sweet…</p>
+      </div>
+
+      <div class="quick-grid">
+        <button class="quick-card glass" data-nav="counter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+          <div class="qc-title">Love Counter</div>
+          <div class="qc-sub">See our timeline</div>
+        </button>
+        <button class="quick-card glass" data-nav="gallery">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <div class="qc-title">Gallery</div>
+          <div class="qc-sub">Our memories</div>
+        </button>
+        <button class="quick-card glass" data-nav="letters">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4z"/><path d="M22 6l-10 7L2 6"/></svg>
+          <div class="qc-title">Love Letters</div>
+          <div class="qc-sub">Words for you</div>
+        </button>
+        <button class="quick-card glass" data-nav="openwhen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 8l9-5 9 5"/></svg>
+          <div class="qc-title">Open When</div>
+          <div class="qc-sub">For hard moments</div>
+        </button>
+        <button class="quick-card glass" data-nav="scratch">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+          <div class="qc-title">Daily Surprise</div>
+          <div class="qc-sub">Scratch a card</div>
+        </button>
+        <button class="quick-card glass" data-nav="gifts">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="8" width="18" height="13" rx="1"/><path d="M3 8l9-5 9 5M12 3v18M12 8a3 3 0 1 0-3-3M12 8a3 3 0 1 1 3-3"/></svg>
+          <div class="qc-title">Send a Gift</div>
+          <div class="qc-sub">Flowers & more</div>
+        </button>
+      </div>
+    </div>
+    <div class="tabbar" id="tabbar-home"></div>
+  </div>
+
+  <!-- ============ LOVE COUNTER ============ -->
+  <div class="screen" id="screen-counter">
+    <div class="topbar"><h1>Love Counter</h1><span style="width:40px"></span></div>
+    <div class="screen-scroll">
+      <div class="counter-hero">
+        <span class="ch-label">Together since</span>
+        <div class="serif" id="counter-since-date" style="font-size:18px; font-weight:600;">—</div>
+      </div>
+      <div class="counter-grid">
+        <div class="counter-unit glass-strong"><div class="cu-num" id="cu-years">0</div><div class="cu-label">Years</div></div>
+        <div class="counter-unit glass-strong"><div class="cu-num" id="cu-months">0</div><div class="cu-label">Months</div></div>
+        <div class="counter-unit glass-strong"><div class="cu-num" id="cu-days">0</div><div class="cu-label">Days</div></div>
+      </div>
+      <div class="counter-sub-grid">
+        <div class="counter-unit glass"><div class="cu-num" id="cu-hours">0</div><div class="cu-label">Hours</div></div>
+        <div class="counter-unit glass"><div class="cu-num" id="cu-mins">0</div><div class="cu-label">Minutes</div></div>
+      </div>
+      <button class="date-edit-row glass" id="btn-edit-anniversary">
+        <span class="label">Relationship start date</span>
+        <span class="value" id="counter-edit-value">Edit →</span>
+      </button>
+    </div>
+    <div class="tabbar" id="tabbar-counter"></div>
+  </div>
+
+  <!-- ============ GALLERY ============ -->
+  <div class="screen" id="screen-gallery">
+    <div class="topbar"><h1>Memory Gallery</h1><span style="width:40px"></span></div>
+    <div class="screen-scroll">
+      <div class="section-head">
+        <p>Every picture, a little time machine.</p>
+      </div>
+      <div class="gallery-grid" id="gallery-grid"></div>
+      <input type="file" id="gallery-input" accept="image/*" multiple style="display:none">
+    </div>
+    <button class="fab" id="fab-gallery" aria-label="Add photos">
+      <svg viewBox="0 0 24 24"><path d="M19 11h-6V5a1 1 0 0 0-2 0v6H5a1 1 0 0 0 0 2h6v6a1 1 0 0 0 2 0v-6h6a1 1 0 0 0 0-2z"/></svg>
+    </button>
+    <div class="tabbar" id="tabbar-gallery"></div>
+  </div>
+
+  <!-- ============ LOVE LETTERS ============ -->
+  <div class="screen" id="screen-letters">
+    <div class="topbar"><h1>Love Letters</h1><span style="width:40px"></span></div>
+    <div class="screen-scroll" id="letters-scroll"></div>
+    <button class="fab" id="fab-letter" aria-label="Write a letter">
+      <svg viewBox="0 0 24 24"><path d="M19 11h-6V5a1 1 0 0 0-2 0v6H5a1 1 0 0 0 0 2h6v6a1 1 0 0 0 2 0v-6h6a1 1 0 0 0 0-2z"/></svg>
+    </button>
+    <div class="tabbar" id="tabbar-letters"></div>
+  </div>
+
+  <!-- ============ OPEN WHEN ============ -->
+  <div class="screen" id="screen-openwhen">
+    <div class="topbar"><h1>Open When…</h1><span style="width:40px"></span></div>
+    <div class="screen-scroll">
+      <div class="section-head"><p>For the moments you need me close.</p></div>
+      <div class="ow-grid" id="ow-grid"></div>
+    </div>
+    <div class="tabbar" id="tabbar-openwhen"></div>
+  </div>
+
+  <!-- ============ BUCKET LIST ============ -->
+  <div class="screen" id="screen-bucket">
+    <div class="topbar"><h1>Bucket List</h1><span style="width:40px"></span></div>
+    <div class="screen-scroll">
+      <div class="progress-wrap">
+        <div class="row-between">
+          <span style="font-size:13px; color:var(--cream-dim);">Our dreams, together</span>
+          <span class="progress-pct" id="bucket-pct">0%</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="bucket-progress-fill"></div></div>
+      </div>
+      <div id="bucket-list"></div>
+    </div>
+    <button class="fab" id="fab-bucket" aria-label="Add bucket item">
+      <svg viewBox="0 0 24 24"><path d="M19 11h-6V5a1 1 0 0 0-2 0v6H5a1 1 0 0 0 0 2h6v6a1 1 0 0 0 2 0v-6h6a1 1 0 0 0 0-2z"/></svg>
+    </button>
+    <div class="tabbar" id="tabbar-bucket"></div>
+  </div>
+
+  <!-- ============ COUNTDOWN ============ -->
+  <div class="screen" id="screen-countdown">
+    <div class="topbar"><h1>Countdown</h1><span style="width:40px"></span></div>
+    <div class="countdown-wrap">
+      <span class="cw-label">Until we're together again</span>
+      <h2 class="cw-title serif" id="countdown-event-title">Next meeting</h2>
+      <div class="cd-grid">
+        <div class="cd-unit glass-strong"><div class="cd-num" id="cd-days">0</div><div class="cd-lbl">Days</div></div>
+        <div class="cd-unit glass-strong"><div class="cd-num" id="cd-hours">0</div><div class="cd-lbl">Hours</div></div>
+        <div class="cd-unit glass-strong"><div class="cd-num" id="cd-mins">0</div><div class="cd-lbl">Mins</div></div>
+        <div class="cd-unit glass-strong"><div class="cd-num" id="cd-secs">0</div><div class="cd-lbl">Secs</div></div>
+      </div>
+      <button class="btn-ghost cd-edit" id="btn-edit-countdown">Set the date →</button>
+    </div>
+    <div class="tabbar" id="tabbar-countdown"></div>
+  </div>
+
+  <!-- ============ MUSIC ============ -->
+  <div class="screen" id="screen-music">
+    <div class="topbar"><h1>Our Song</h1><span style="width:40px"></span></div>
+    <div class="screen-scroll">
+      <div class="music-card glass">
+        <div class="album-art" id="album-art">
+          <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </div>
+        <div class="music-title" id="music-title">No song yet</div>
+        <div class="music-artist" id="music-artist">Add your song below</div>
+        <div class="music-progress"><div class="music-progress-fill" id="music-progress-fill"></div></div>
+        <div class="music-controls">
+          <button class="music-btn" id="music-prev"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+          <button class="music-btn play" id="music-play"><svg id="music-play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="music-btn" id="music-next"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+        </div>
+        <div class="music-upload-hint">Tap below to add your own song file — it'll play right from this device, saved for next time.</div>
+      </div>
+      <button class="btn-ghost" id="btn-add-music" style="width:100%; margin-top:14px; justify-content:center;">+ Add a song</button>
+      <input type="file" id="music-input" accept="audio/*" style="display:none">
+      <audio id="audio-player"></audio>
+    </div>
+    <div class="tabbar" id="tabbar-music"></div>
+  </div>
+
+  <!-- ============ SECRET ============ -->
+  <div class="screen" id="screen-secret">
+    <div class="topbar"><h1>Secret Space</h1><span style="width:40px"></span></div>
+    <div class="pin-wrap" id="pin-screen">
+      <div class="pin-lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+      <div class="pin-title" id="pin-title-text">Enter PIN</div>
+      <div class="pin-sub">Just for us</div>
+      <div class="pin-dots" id="pin-dots"></div>
+      <div class="pin-pad" id="pin-pad"></div>
+    </div>
+    <div class="screen-scroll hidden" id="secret-content">
+      <div class="section-head"><p>The little things I only want you to see.</p></div>
+      <div id="secret-letters-list"></div>
+    </div>
+    <div class="tabbar" id="tabbar-secret"></div>
+  </div>
+
+  <!-- ============ GIFTS ============ -->
+  <div class="screen" id="screen-gifts">
+    <div class="topbar"><h1>Send a Gift</h1><span style="width:40px"></span></div>
+    <div class="screen-scroll">
+      <div class="gift-tabs">
+        <button class="gift-tab active" data-gift="flowers">Flowers</button>
+        <button class="gift-tab" data-gift="chocolate">Chocolates</button>
+        <button class="gift-tab" data-gift="box">Surprise Box</button>
+      </div>
+      <div class="gift-stage glass" id="gift-stage">
+        <div class="gift-emoji-display" id="gift-emoji">🌹</div>
+        <div class="gift-msg" id="gift-msg">Pick a flower to send</div>
+        <div class="gift-row" id="gift-options"></div>
+      </div>
+    </div>
+    <div class="tabbar" id="tabbar-gifts"></div>
+  </div>
+
+  <!-- ============ SCRATCH CARDS ============ -->
+  <div class="screen" id="screen-scratch">
+    <div class="topbar"><h1>Daily Surprise</h1><span style="width:40px"></span></div>
+    <div class="screen-scroll">
+      <div class="daily-special" id="daily-special-card">
+        <div class="daily-special-inner">
+          <div class="ds-icon">🎁</div>
+          <div class="ds-text">
+            <div class="ds-label">Today's Couple Moment</div>
+            <div class="ds-title" id="daily-special-title">Tap to reveal today's card</div>
+          </div>
+        </div>
+      </div>
+      <div class="section-head"><p>Choose a category — scratch to reveal.</p></div>
+      <div class="scratch-cat-grid" id="scratch-cat-grid"></div>
+      <div class="section-head" style="margin-top:24px;"><h2 style="font-size:17px;">Revealed history</h2></div>
+      <div id="scratch-history" class="empty-state" style="padding:30px 20px;"><p>Nothing revealed yet — go scratch a card!</p></div>
+    </div>
+    <div class="tabbar" id="tabbar-scratch"></div>
+  </div>
+
+  <!-- ============ SETTINGS ============ -->
+  <div class="screen" id="screen-settings">
+    <div class="topbar"><h1>Settings</h1><span style="width:40px"></span></div>
+    <div class="screen-scroll">
+      <div class="settings-section">
+        <h3>Profile photo</h3>
+        <div class="settings-avatar-edit">
+          <div class="avatar-ring" style="width:64px; height:64px; margin:0;">
+            <div class="avatar-fallback" id="settings-avatar-preview" style="font-size:24px;">💛</div>
+          </div>
+          <button class="btn-ghost" id="btn-change-avatar">Change photo</button>
+          <input type="file" id="avatar-input" accept="image/*" style="display:none">
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Names</h3>
+        <div class="form-group">
+          <label class="form-label">Your name</label>
+          <input type="text" id="setting-name-me" placeholder="Your name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Her name</label>
+          <input type="text" id="setting-name-her" placeholder="Her name">
+        </div>
+        <button class="btn-primary" id="btn-save-names" style="width:100%;">Save names</button>
+      </div>
+
+      <div class="settings-section">
+        <h3>Anniversary date</h3>
+        <div class="form-group">
+          <input type="date" id="setting-anniversary">
+        </div>
+        <button class="btn-primary" id="btn-save-anniversary" style="width:100%;">Save date</button>
+      </div>
+
+      <div class="settings-section">
+        <h3>Theme color</h3>
+        <div class="theme-swatches" id="theme-swatches"></div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Secret PIN</h3>
+        <div class="form-group">
+          <label class="form-label">4-digit PIN</label>
+          <input type="password" id="setting-pin" placeholder="••••" maxlength="4" inputmode="numeric">
+        </div>
+        <button class="btn-primary" id="btn-save-pin" style="width:100%;">Save PIN</button>
+      </div>
+
+      <div class="settings-section">
+        <h3>Data</h3>
+        <button class="settings-row glass" id="btn-export-data" style="width:100%; text-align:left;">
+          <div><div class="sr-label">Export backup</div><div class="sr-sub">Save everything as a file</div></div>
+        </button>
+        <button class="settings-row glass" id="btn-reset-data" style="width:100%; text-align:left; margin-top:8px;">
+          <div><div class="sr-label" style="color:var(--rose);">Reset everything</div><div class="sr-sub">Start fresh — cannot be undone</div></div>
+        </button>
+      </div>
+    </div>
+    <div class="tabbar" id="tabbar-settings"></div>
+  </div>
+
+</div>
+
+<!-- ============ LIGHTBOX ============ -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightbox-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+  <button class="lightbox-nav lightbox-prev" id="lightbox-prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <img id="lightbox-img" src="" alt="">
+  <button class="lightbox-nav lightbox-next" id="lightbox-next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 18l6-6-6-6"/></svg></button>
+</div>
+
+<!-- ============ OPEN WHEN MODAL ============ -->
+<div class="ow-modal" id="ow-modal">
+  <div class="ow-modal-card">
+    <div class="om-icon"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10.1-9.1C.4 9.2 1.6 5.6 4.9 4.6c2-.6 4 .2 5.1 1.9.5.8.9 1.5 2 1.5s1.5-.7 2-1.5c1.1-1.7 3.1-2.5 5.1-1.9 3.3 1 4.5 4.6 3 7.3C19.4 16.4 12 21 12 21z"/></svg></div>
+    <h3 id="ow-modal-title">Title</h3>
+    <p id="ow-modal-text">Message</p>
+    <button class="btn-primary" id="ow-modal-close" style="width:100%;">Close with love</button>
+  </div>
+</div>
+
+<!-- ============ SCRATCH MODAL ============ -->
+<div class="scratch-modal" id="scratch-modal">
+  <button class="scratch-modal-close" id="scratch-modal-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+  <div style="display:flex; flex-direction:column; align-items:center;">
+    <div class="scratch-card-3d" id="scratch-card-3d">
+      <div class="scratch-card-flip" id="scratch-card-flip">
+        <div class="sc-face sc-face-front" id="sc-face-front">
+          <div class="scf-emoji" id="scf-emoji">💌</div>
+          <h3 id="scf-title">Category</h3>
+          <p>Tap to flip, then scratch to reveal your surprise</p>
+        </div>
+        <div class="sc-face sc-face-back" id="sc-face-back">
+          <div class="scratch-canvas-wrap">
+            <div class="scratch-reveal" id="scratch-reveal-content">
+              <div class="sr-emoji" id="sr-emoji">💕</div>
+              <p id="sr-text">Your message</p>
+            </div>
+            <canvas class="scratch-canvas" id="scratch-canvas"></canvas>
+          </div>
+          <div class="scratch-hint" id="scratch-hint">✨ scratch here ✨</div>
+        </div>
+      </div>
+    </div>
+    <div class="scratch-modal-actions hidden" id="scratch-done-actions">
+      <button class="btn-ghost" id="scratch-close-btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ GENERIC SHEET (letters, bucket, dates, etc.) ============ -->
+<div class="sheet-overlay" id="sheet-overlay">
+  <div class="sheet" id="sheet-content"></div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
