@@ -1273,6 +1273,10 @@
     document.getElementById('sr-emoji').textContent = content.emoji;
     document.getElementById('sr-text').textContent = content.text;
 
+    scratchRevealed = false;
+    scratchCanvas.style.display = '';
+    scratchCanvas.style.opacity = '1';
+    scratchCanvas.style.transition = '';
     scratchModal.classList.add('active');
 
     setTimeout(() => {
@@ -1346,7 +1350,7 @@
     }
 
     function pointerDown(e) {
-      if (e.touches) e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       isDown = true;
       const p = getPos(e);
       scratchAt(p.x, p.y);
@@ -1364,6 +1368,13 @@
     scratchCanvas.onmousedown = pointerDown;
     scratchCanvas.onmousemove = pointerMove;
     scratchCanvas.onmouseup = pointerUp;
+    // Remove old listeners first to prevent stacking across sessions
+    if (scratchCanvas._td) scratchCanvas.removeEventListener('touchstart', scratchCanvas._td);
+    if (scratchCanvas._tm) scratchCanvas.removeEventListener('touchmove', scratchCanvas._tm);
+    if (scratchCanvas._tu) scratchCanvas.removeEventListener('touchend', scratchCanvas._tu);
+    scratchCanvas._td = pointerDown;
+    scratchCanvas._tm = pointerMove;
+    scratchCanvas._tu = pointerUp;
     scratchCanvas.addEventListener('touchstart', pointerDown, { passive: false });
     scratchCanvas.addEventListener('touchmove', pointerMove, { passive: false });
     scratchCanvas.addEventListener('touchend', pointerUp, { passive: false });
@@ -1391,10 +1402,10 @@
     scratchCanvas.style.display = '';
     scratchCanvas.style.opacity = '1';
     scratchCanvas.onmousedown = scratchCanvas.onmousemove = scratchCanvas.onmouseup = null;
-    scratchCanvas.ontouchstart = scratchCanvas.ontouchmove = scratchCanvas.ontouchend = null;
-    scratchCanvas.removeEventListener('touchstart', pointerDown);
-    scratchCanvas.removeEventListener('touchmove', pointerMove);
-    scratchCanvas.removeEventListener('touchend', pointerUp);
+    if (scratchCanvas._td) scratchCanvas.removeEventListener('touchstart', scratchCanvas._td);
+    if (scratchCanvas._tm) scratchCanvas.removeEventListener('touchmove', scratchCanvas._tm);
+    if (scratchCanvas._tu) scratchCanvas.removeEventListener('touchend', scratchCanvas._tu);
+    scratchCanvas._td = scratchCanvas._tm = scratchCanvas._tu = null;
     renderScratch();
   }
 
