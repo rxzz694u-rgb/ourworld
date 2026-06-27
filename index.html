@@ -960,6 +960,351 @@ textarea{resize:vertical; min-height:90px; font-family:inherit; line-height:1.6;
       <div id="scratch-history" class="empty-state" style="padding:30px 20px;"><p>Nothing revealed yet — go scratch a card!</p></div>
     </div>
     <div class="tabbar" id="tabbar-scratch"></div>
+
+    <!-- SELF-CONTAINED SCRATCH OVERLAY — works independently -->
+    <div id="sc-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;padding:20px;">
+      <div style="width:100%;max-width:340px;background:#1c1426;border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.6);">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.08);">
+          <span id="sc-ov-title" style="font-size:15px;font-weight:600;color:#f6ecdf;"></span>
+          <button id="sc-ov-close" style="background:none;border:none;cursor:pointer;color:#f6ecdf;font-size:22px;line-height:1;padding:4px;">×</button>
+        </div>
+        <!-- Card flip area -->
+        <div style="padding:20px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+          <div id="sc-card-wrap" style="width:240px;height:300px;position:relative;perspective:900px;">
+            <!-- Front -->
+            <div id="sc-front" style="position:absolute;inset:0;border-radius:16px;background:linear-gradient(135deg,#2a1a36,#1c1226);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;backface-visibility:hidden;transition:transform 0.6s;transform-style:preserve-3d;">
+              <div id="sc-front-emoji" style="font-size:52px;"></div>
+              <div id="sc-front-title" style="font-size:15px;font-weight:600;color:#f6ecdf;text-align:center;padding:0 16px;"></div>
+              <div style="font-size:12px;color:rgba(246,236,223,0.5);">Get ready to scratch...</div>
+            </div>
+            <!-- Back -->
+            <div id="sc-back" style="position:absolute;inset:0;border-radius:16px;overflow:hidden;backface-visibility:hidden;transform:rotateY(180deg);transition:transform 0.6s;transform-style:preserve-3d;">
+              <!-- Revealed content underneath -->
+              <div id="sc-revealed" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:#1c1426;">
+                <div id="sc-rev-emoji" style="font-size:44px;margin-bottom:14px;"></div>
+                <p id="sc-rev-text" style="font-size:14px;line-height:1.7;color:#f6ecdf;font-style:italic;margin:0;"></p>
+              </div>
+              <!-- Scratch canvas on top -->
+              <canvas id="sc-canvas" style="position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair;border-radius:16px;"></canvas>
+            </div>
+          </div>
+          <div id="sc-hint" style="font-size:13px;color:rgba(246,236,223,0.5);">Card will flip in a moment...</div>
+          <button id="sc-done-btn" style="display:none;width:100%;padding:12px;background:linear-gradient(135deg,#e8a8a0,#c8607a);border:none;border-radius:12px;color:#2a1018;font-size:14px;font-weight:600;cursor:pointer;">Close & Save ♥</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function() {
+      var CONTENT = {
+        daily:[
+          {e:"🌙",t:"Plan a surprise video call date — candles, music, and your favourite drink each."},
+          {e:"🎤",t:"Send a voice note saying exactly what you love most about them right now."},
+          {e:"📸",t:"Share your all-time favourite memory together with a photo if you have one."},
+          {e:"💌",t:"Write them a short letter about where you see yourselves in 5 years."},
+          {e:"🌹",t:"Tell them one thing they do that always makes you smile without even trying."},
+          {e:"✨",t:"Plan your next meet-up idea — even if it's just a dream for now."},
+          {e:"🎵",t:"Share a song that makes you think of them and explain why."}
+        ],
+        date:[
+          {e:"🕯️",t:"Cook the same recipe together over a video call — compare results."},
+          {e:"🎬",t:"Pick a movie to watch simultaneously and react together over chat."},
+          {e:"🌅",t:"Wake up early and watch the sunrise together on a call."},
+          {e:"🍕",t:"Order from each other's favourite restaurant and eat together on video."},
+          {e:"🎮",t:"Play an online game together for an hour — loser does a dare."},
+          {e:"📖",t:"Read the same chapter of a book and discuss it over a call tonight."}
+        ],
+        flirty:[
+          {e:"😍",t:"Send a random cute selfie right now — no filter, no prep, just you."},
+          {e:"💋",t:"Tell them one thing about them that you find irresistible."},
+          {e:"🌶️",t:"Describe your perfect day together in 3 sentences."},
+          {e:"💭",t:"Tell them the first thing you noticed about them when you first met."},
+          {e:"🥰",t:"Send a compliment so specific it could only be about them."},
+          {e:"✉️",t:"Write them a flirty good morning message for them to wake up to."}
+        ],
+        challenge:[
+          {e:"🎯",t:"Both draw a portrait of each other in 60 seconds — share and react."},
+          {e:"🤔",t:"Ask each other 5 deep questions and see who knows the other better."},
+          {e:"🎲",t:"Each pick 3 activities for a future date — the other must agree to all 3."},
+          {e:"📝",t:"Write 3 things you appreciate about them right now and share simultaneously."},
+          {e:"🎤",t:"Record a voice message recreating your first conversation — compare memories."},
+          {e:"🔮",t:"Each describe your ideal future home in detail — compare the visions."}
+        ],
+        bonding:[
+          {e:"🌊",t:"What is one fear you have never told me about?"},
+          {e:"🌟",t:"What moment with me are you most proud of?"},
+          {e:"💡",t:"What is one thing you wish we did more of together?"},
+          {e:"🌈",t:"If you could relive one day of our relationship, which would it be and why?"},
+          {e:"🤍",t:"What does feeling truly loved by me look and feel like to you?"},
+          {e:"🧭",t:"What is something on your heart lately that you haven't shared yet?"}
+        ],
+        surprise:[
+          {e:"🎁",t:"Hide a small surprise — a note, a gift, or a letter — for them to find later."},
+          {e:"🌸",t:"Send them flowers or their favourite snack to their door today."},
+          {e:"📹",t:"Make a short video of something beautiful you saw today — just for them."},
+          {e:"🎶",t:"Create a short playlist of songs that describe your feelings right now."},
+          {e:"💌",t:"Mail them a handwritten letter — old school, no phone involved."},
+          {e:"🌙",t:"Plan a surprise late night call — just to talk, no agenda, just presence."}
+        ]
+      };
+
+      var CATS = [
+        {key:"date",   emoji:"🌙", title:"Date Night Ideas",   sub:"Something to plan together"},
+        {key:"flirty", emoji:"😘", title:"Flirty Messages",    sub:"A little spark for today"},
+        {key:"challenge",emoji:"🎯",title:"Couple Challenges", sub:"A fun dare for both of you"},
+        {key:"bonding",emoji:"💬", title:"Emotional Bonding",  sub:"A question worth asking"},
+        {key:"surprise",emoji:"🎉",title:"Surprise Activities",sub:"Something unexpected"}
+      ];
+
+      function todayKey(){var d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
+      function dateSeed(){var d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
+      function getScratchState(){try{return JSON.parse(localStorage.getItem("ow_scratch_v2")||"{}");}catch(e){return{};}}
+      function setScratchState(s){localStorage.setItem("ow_scratch_v2",JSON.stringify(s));}
+
+      var overlay=document.getElementById("sc-overlay");
+      var front=document.getElementById("sc-front");
+      var back=document.getElementById("sc-back");
+      var canvas=document.getElementById("sc-canvas");
+      var hint=document.getElementById("sc-hint");
+      var doneBtn=document.getElementById("sc-done-btn");
+      var currentKey=null, currentContent=null, revealed=false;
+      var _td=null,_tm=null,_tu=null;
+
+      function openCard(key,catMeta,content){
+        currentKey=key; currentContent=content; revealed=false;
+
+        // Reset card to front
+        front.style.transform="rotateY(0deg)";
+        back.style.transform="rotateY(180deg)";
+
+        // Reset canvas
+        canvas.style.opacity="1";
+        canvas.style.display="block";
+        hint.textContent="Card will flip in a moment...";
+        hint.style.opacity="1";
+        doneBtn.style.display="none";
+
+        // Fill content
+        document.getElementById("sc-ov-title").textContent=catMeta.title;
+        document.getElementById("sc-front-emoji").textContent=catMeta.emoji;
+        document.getElementById("sc-front-title").textContent=catMeta.title;
+        document.getElementById("sc-rev-emoji").textContent=content.e;
+        document.getElementById("sc-rev-text").textContent=content.t;
+
+        // Show overlay
+        overlay.style.display="flex";
+        document.body.style.overflow="hidden";
+
+        // Flip after 600ms
+        setTimeout(function(){
+          front.style.transform="rotateY(-180deg)";
+          back.style.transform="rotateY(0deg)";
+          hint.textContent="✨ Scratch the gold area with your finger ✨";
+          setTimeout(function(){ setupCanvas(); }, 700);
+        }, 600);
+      }
+
+      function setupCanvas(){
+        var rect=canvas.getBoundingClientRect();
+        var dpr=window.devicePixelRatio||1;
+        canvas.width=Math.round(rect.width*dpr);
+        canvas.height=Math.round(rect.height*dpr);
+        var ctx=canvas.getContext("2d");
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.scale(dpr,dpr);
+        var w=rect.width,h=rect.height;
+
+        // Gold gradient
+        var g=ctx.createLinearGradient(0,0,w,h);
+        g.addColorStop(0,"#f0d280");
+        g.addColorStop(0.5,"#d4a840");
+        g.addColorStop(1,"#b88c30");
+        ctx.fillStyle=g;
+        ctx.fillRect(0,0,w,h);
+
+        // Texture
+        ctx.globalAlpha=0.06;
+        for(var i=0;i<400;i++){
+          ctx.fillStyle=Math.random()>0.5?"#fff":"#000";
+          ctx.fillRect(Math.random()*w,Math.random()*h,2,2);
+        }
+        ctx.globalAlpha=1;
+        ctx.font="bold 14px sans-serif";
+        ctx.fillStyle="rgba(60,40,0,0.55)";
+        ctx.textAlign="center";
+        ctx.fillText("scratch to reveal ✨",w/2,h/2);
+
+        // Remove old listeners
+        if(_td){canvas.removeEventListener("touchstart",_td);canvas.removeEventListener("touchmove",_tm);canvas.removeEventListener("touchend",_tu);}
+        canvas.onmousedown=null;canvas.onmousemove=null;canvas.onmouseup=null;
+
+        var isDown=false, checks=0;
+
+        function getXY(e){
+          var r=canvas.getBoundingClientRect();
+          var pt=e.touches?e.touches[0]:e;
+          return{x:pt.clientX-r.left,y:pt.clientY-r.top};
+        }
+        function scratchAt(x,y){
+          ctx.globalCompositeOperation="destination-out";
+          ctx.beginPath();ctx.arc(x,y,26,0,Math.PI*2);ctx.fill();
+          ctx.globalCompositeOperation="source-over";
+        }
+        function checkPct(){
+          if(revealed)return;
+          checks++;if(checks%4!==0)return;
+          var d=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+          var cleared=0;
+          for(var i=3;i<d.length;i+=4*28){if(d[i]<50)cleared++;}
+          if(cleared/(d.length/(4*28))>0.50){doReveal();}
+        }
+        function onDown(e){e.preventDefault();isDown=true;var p=getXY(e);scratchAt(p.x,p.y);hint.style.opacity="0";}
+        function onMove(e){e.preventDefault();if(!isDown)return;var p=getXY(e);scratchAt(p.x,p.y);checkPct();}
+        function onUp(){isDown=false;checkPct();}
+
+        _td=onDown;_tm=onMove;_tu=onUp;
+        canvas.addEventListener("touchstart",onDown,{passive:false});
+        canvas.addEventListener("touchmove",onMove,{passive:false});
+        canvas.addEventListener("touchend",onUp,{passive:false});
+        canvas.onmousedown=onDown;canvas.onmousemove=onMove;canvas.onmouseup=onUp;
+      }
+
+      function doReveal(){
+        if(revealed)return;
+        revealed=true;
+        canvas.style.transition="opacity 0.5s";
+        canvas.style.opacity="0";
+        setTimeout(function(){canvas.style.display="none";},500);
+        hint.textContent="💛 Revealed!";
+        hint.style.opacity="1";
+        doneBtn.style.display="block";
+
+        // Save to state
+        var s=getScratchState();
+        if(!s.taken)s.taken={};
+        if(!s.history)s.history=[];
+        s.taken[currentKey+"|"+todayKey()]=true;
+        s.history.push({key:currentKey,emoji:currentContent.e,text:currentContent.t,date:new Date().toISOString()});
+        setScratchState(s);
+
+        // Also save to main app state if available
+        if(window._appState){
+          window._appState.scratchTakenDates=window._appState.scratchTakenDates||{};
+          window._appState.scratchTakenDates[currentKey+"|"+todayKey()]=true;
+          window._appState.scratchHistory=window._appState.scratchHistory||[];
+          window._appState.scratchHistory.push({id:Date.now().toString(36),category:currentKey,date:new Date().toISOString(),text:currentContent.t,emoji:currentContent.e});
+          if(window._saveState)window._saveState();
+        }
+
+        // Hearts effect
+        spawnHearts();
+      }
+
+      function spawnHearts(){
+        var colors=["#e8a8a0","#c8607a","#ff6b9d","#d9b46a","#f4a0b8"];
+        for(var i=0;i<30;i++){
+          (function(i){
+            setTimeout(function(){
+              var h=document.createElement("div");
+              h.textContent="♥";
+              h.style.cssText="position:fixed;pointer-events:none;z-index:99999;font-size:"+(14+Math.random()*22)+"px;color:"+colors[Math.floor(Math.random()*colors.length)]+";left:"+(10+Math.random()*80)+"vw;top:70vh;opacity:1;transition:transform 2s ease-out,opacity 2s ease-out;";
+              document.body.appendChild(h);
+              setTimeout(function(){
+                h.style.transform="translateY(-"+(Math.random()*60+30)+"vh) translateX("+(Math.random()*60-30)+"px)";
+                h.style.opacity="0";
+              },50);
+              setTimeout(function(){h.remove();},2100);
+            },i*60);
+          })(i);
+        }
+      }
+
+      function closeOverlay(){
+        overlay.style.display="none";
+        document.body.style.overflow="";
+        if(_td){canvas.removeEventListener("touchstart",_td);canvas.removeEventListener("touchmove",_tm);canvas.removeEventListener("touchend",_tu);}
+        canvas.onmousedown=null;canvas.onmousemove=null;canvas.onmouseup=null;
+        // Refresh scratch history display
+        renderScratchHistory();
+      }
+
+      function renderScratchHistory(){
+        var el=document.getElementById("scratch-history");
+        if(!el)return;
+        var s=getScratchState();
+        var hist=(s.history||[]).slice().reverse().slice(0,15);
+        if(!hist.length){el.innerHTML="<p style='color:rgba(246,236,223,0.4);text-align:center;padding:20px;'>Nothing revealed yet — go scratch a card!</p>";return;}
+        el.innerHTML=hist.map(function(h){
+          return "<div style='background:rgba(255,255,255,0.05);border-radius:14px;padding:14px 16px;margin-bottom:10px;'><div style='font-size:11px;color:rgba(246,236,223,0.4);margin-bottom:6px;'>"+h.emoji+" "+h.key+" &middot; "+new Date(h.date).toLocaleDateString()+"</div><p style='font-size:14px;line-height:1.6;color:#f6ecdf;font-style:italic;margin:0;'>"+h.text+"</p></div>";
+        }).join("");
+      }
+
+      function initScratch(){
+        var s=getScratchState();
+        var tk=todayKey();
+
+        // Special daily card
+        var dailyTaken=!!(s.taken&&s.taken["daily|"+tk]);
+        var dsc=document.getElementById("daily-special-card");
+        var dst=document.getElementById("daily-special-title");
+        if(dst)dst.textContent=dailyTaken?"Already revealed today — check history below":"Tap to reveal today's card";
+        if(dsc){
+          dsc.onclick=function(){
+            if(dailyTaken){alert("You've already revealed today's special! Check history below.");return;}
+            var seed=dateSeed();
+            var all=[];
+            Object.keys(CONTENT).forEach(function(k){CONTENT[k].forEach(function(c){all.push(c);});});
+            var content=all[seed%all.length];
+            openCard("daily",{emoji:"🎁",title:"Today's Couple Moment"},content);
+          };
+        }
+
+        // Category grid
+        var grid=document.getElementById("scratch-cat-grid");
+        if(!grid)return;
+        grid.innerHTML=CATS.map(function(c){
+          var taken=!!(s.taken&&s.taken[c.key+"|"+tk]);
+          return "<button onclick="window._scratchOpen('"+c.key+"')" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;cursor:pointer;margin-bottom:10px;text-align:left;"+(taken?"opacity:0.5;":"")+"">"
+            +"<span style="font-size:28px;">"+c.emoji+"</span>"
+            +"<div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#f6ecdf;">"+c.title+"</div><div style="font-size:12px;color:rgba(246,236,223,0.5);margin-top:2px;">"+c.sub+"</div></div>"
+            +(taken?"<span style="font-size:11px;background:rgba(255,255,255,0.1);color:rgba(246,236,223,0.5);padding:4px 10px;border-radius:20px;">Done today</span>":"")
+            +"</button>";
+        }).join("");
+
+        renderScratchHistory();
+      }
+
+      // Global open function called by inline onclick
+      window._scratchOpen=function(key){
+        var s=getScratchState();
+        var tk=todayKey();
+        if(s.taken&&s.taken[key+"|"+tk]){alert("Come back tomorrow for a new one!");return;}
+        var cat=CATS.find(function(c){return c.key===key;});
+        var seed=dateSeed()+key.length*7;
+        var pool=CONTENT[key];
+        var content=pool[seed%pool.length];
+        openCard(key,cat,content);
+      };
+
+      document.getElementById("sc-ov-close").onclick=closeOverlay;
+      doneBtn.onclick=closeOverlay;
+
+      // Init when screen is shown
+      var origGoTo=window.goTo;
+      function tryInit(){
+        if(document.getElementById("scratch-cat-grid")){initScratch();}
+      }
+      // Run on load and whenever the surprise tab is tapped
+      document.addEventListener("DOMContentLoaded",function(){
+        setTimeout(tryInit,500);
+        document.querySelectorAll("[data-nav='scratch']").forEach(function(btn){
+          btn.addEventListener("click",function(){setTimeout(initScratch,100);});
+        });
+      });
+      setTimeout(tryInit,800);
+    })();
+    </script>
   </div>
 
   <!-- ============ SETTINGS ============ -->
