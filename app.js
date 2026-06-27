@@ -291,87 +291,117 @@
   resizeFx();
   window.addEventListener('resize', resizeFx);
 
+  // Draw a heart shape on canvas at (cx, cy) with given size and color
+  function drawHeart(ctx, cx, cy, size, color, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    const s = size / 2;
+    ctx.moveTo(cx, cy + s * 0.3);
+    ctx.bezierCurveTo(cx - s * 0.1, cy + s * 0.1, cx - s, cy - s * 0.5, cx - s, cy - s * 0.1);
+    ctx.bezierCurveTo(cx - s, cy - s * 0.9, cx - s * 0.1, cy - s * 1.1, cx, cy - s * 0.55);
+    ctx.bezierCurveTo(cx + s * 0.1, cy - s * 1.1, cx + s, cy - s * 0.9, cx + s, cy - s * 0.1);
+    ctx.bezierCurveTo(cx + s, cy - s * 0.5, cx + s * 0.1, cy + s * 0.1, cx, cy + s * 0.3);
+    ctx.fill();
+    ctx.restore();
+  }
+
   function fireConfetti() {
-    const colors = ['#e8a8a0', '#c8607a', '#d9b46a', '#f6ecdf', '#e6c98a'];
-    let pieces = [];
-    for (let i = 0; i < 90; i++) {
-      pieces.push({
+    // Replace confetti with floating hearts
+    const colors = ['#e8a8a0', '#c8607a', '#e87a9a', '#d9b46a', '#f4a0b8', '#ff6b9d', '#ffb3c6'];
+    let hearts = [];
+    const dpr = devicePixelRatio || 1;
+
+    for (let i = 0; i < 55; i++) {
+      hearts.push({
         x: Math.random() * innerWidth,
-        y: -20 - Math.random() * innerHeight * 0.3,
-        w: 6 + Math.random() * 6,
-        h: 8 + Math.random() * 10,
+        y: innerHeight + 20 + Math.random() * 80,
+        size: 10 + Math.random() * 22,
         color: colors[Math.floor(Math.random() * colors.length)],
-        speed: 2 + Math.random() * 3,
-        rot: Math.random() * 360,
-        rotSpeed: (Math.random() - 0.5) * 10,
-        drift: (Math.random() - 0.5) * 2
+        speed: 1.2 + Math.random() * 2.2,
+        drift: (Math.random() - 0.5) * 1.2,
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: 0.02 + Math.random() * 0.03,
+        alpha: 0.55 + Math.random() * 0.45,
+        delay: Math.floor(Math.random() * 40)
       });
     }
+
     let frames = 0;
     function step() {
       frames++;
       fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
       fxCtx.save();
-      fxCtx.scale(devicePixelRatio, devicePixelRatio);
-      pieces.forEach(p => {
-        p.y += p.speed;
-        p.x += p.drift;
-        p.rot += p.rotSpeed;
-        fxCtx.save();
-        fxCtx.translate(p.x, p.y);
-        fxCtx.rotate(p.rot * Math.PI / 180);
-        fxCtx.fillStyle = p.color;
-        fxCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-        fxCtx.restore();
+      fxCtx.scale(dpr, dpr);
+      hearts.forEach(h => {
+        if (frames < h.delay) return;
+        h.y -= h.speed;
+        h.wobble += h.wobbleSpeed;
+        h.x += Math.sin(h.wobble) * 0.8 + h.drift;
+        // Fade out near top
+        const fadeAlpha = h.y < innerHeight * 0.25
+          ? h.alpha * (h.y / (innerHeight * 0.25))
+          : h.alpha;
+        drawHeart(fxCtx, h.x, h.y, h.size, h.color, Math.max(fadeAlpha, 0));
       });
       fxCtx.restore();
-      pieces = pieces.filter(p => p.y < innerHeight + 30);
-      if (pieces.length && frames < 240) requestAnimationFrame(step);
+      hearts = hearts.filter(h => h.y > -30);
+      if (hearts.length && frames < 300) requestAnimationFrame(step);
       else fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
     }
     step();
   }
 
   function fireFireworks() {
-    const colors = ['#e8a8a0', '#c8607a', '#d9b46a', '#f6ecdf'];
-    let particles = [];
-    function burst(x, y) {
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      const count = 36;
+    // Replace fireworks bursts with exploding hearts
+    const colors = ['#e8a8a0', '#c8607a', '#ff6b9d', '#d9b46a', '#f4a0b8'];
+    const dpr = devicePixelRatio || 1;
+    let hearts = [];
+
+    function burst(cx, cy) {
+      const count = 14;
       for (let i = 0; i < count; i++) {
-        const angle = (Math.PI * 2 * i) / count;
-        const speed = 2 + Math.random() * 3;
-        particles.push({
-          x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-          life: 60 + Math.random() * 20, color, size: 2 + Math.random() * 2
+        const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.4 - 0.2);
+        const speed = 2.5 + Math.random() * 3.5;
+        hearts.push({
+          x: cx, y: cy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: 8 + Math.random() * 14,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          life: 70 + Math.random() * 30,
+          maxLife: 100,
+          gravity: 0.06 + Math.random() * 0.04
         });
       }
     }
+
     const launchPoints = [
-      [innerWidth * 0.3, innerHeight * 0.35],
-      [innerWidth * 0.7, innerHeight * 0.3],
-      [innerWidth * 0.5, innerHeight * 0.45]
+      [innerWidth * 0.25, innerHeight * 0.38],
+      [innerWidth * 0.75, innerHeight * 0.32],
+      [innerWidth * 0.5,  innerHeight * 0.28]
     ];
-    launchPoints.forEach((pt, i) => setTimeout(() => burst(pt[0], pt[1]), i * 350));
+    launchPoints.forEach((pt, i) => setTimeout(() => burst(pt[0], pt[1]), i * 320));
 
     let frames = 0;
     function step() {
       frames++;
       fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
       fxCtx.save();
-      fxCtx.scale(devicePixelRatio, devicePixelRatio);
-      particles.forEach(p => {
-        p.x += p.vx; p.y += p.vy; p.vy += 0.04; p.life--;
-        fxCtx.globalAlpha = Math.max(p.life / 80, 0);
-        fxCtx.fillStyle = p.color;
-        fxCtx.beginPath();
-        fxCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        fxCtx.fill();
+      fxCtx.scale(dpr, dpr);
+      hearts.forEach(h => {
+        h.x += h.vx;
+        h.y += h.vy;
+        h.vy += h.gravity;
+        h.vx *= 0.98;
+        h.life--;
+        const alpha = Math.max(h.life / h.maxLife, 0);
+        drawHeart(fxCtx, h.x, h.y, h.size * alpha + h.size * 0.3, h.color, alpha);
       });
-      fxCtx.globalAlpha = 1;
       fxCtx.restore();
-      particles = particles.filter(p => p.life > 0);
-      if (frames < 200 && (particles.length || frames < 50)) requestAnimationFrame(step);
+      hearts = hearts.filter(h => h.life > 0);
+      if (frames < 220 && (hearts.length || frames < 60)) requestAnimationFrame(step);
       else fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
     }
     step();
