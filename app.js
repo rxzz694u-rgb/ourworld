@@ -1273,10 +1273,6 @@
     document.getElementById('sr-emoji').textContent = content.emoji;
     document.getElementById('sr-text').textContent = content.text;
 
-    scratchRevealed = false;
-    scratchCanvas.style.display = '';
-    scratchCanvas.style.opacity = '1';
-    scratchCanvas.style.transition = '';
     scratchModal.classList.add('active');
 
     setTimeout(() => {
@@ -1368,7 +1364,6 @@
     scratchCanvas.onmousedown = pointerDown;
     scratchCanvas.onmousemove = pointerMove;
     scratchCanvas.onmouseup = pointerUp;
-    // Remove old listeners first to prevent stacking across sessions
     if (scratchCanvas._td) scratchCanvas.removeEventListener('touchstart', scratchCanvas._td);
     if (scratchCanvas._tm) scratchCanvas.removeEventListener('touchmove', scratchCanvas._tm);
     if (scratchCanvas._tu) scratchCanvas.removeEventListener('touchend', scratchCanvas._tu);
